@@ -74,7 +74,7 @@ if not meson.is_subproject()
     test('all_tests',
       executable(
         'run_tests',
-        files(project_test_files),
+        project_test_files,
         dependencies : [project_dep, test_dep],
         install: false,
         cpp_args: build_args,

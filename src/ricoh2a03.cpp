@@ -20,6 +20,7 @@ void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
             case 0x00:
                 return;
             case 0xA9:
+                {
                 std::uint8_t param = program[pc];
                 pc += 1;
                 reg_acc = param;
@@ -28,7 +29,6 @@ void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
                     reg_status = reg_status | 0b00000010; 
                 } else {
                     reg_status = reg_status | 0b11111101; 
-
                 }
 
                 if((reg_acc & 0b10000000) != 0) {
@@ -37,7 +37,22 @@ void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
                     reg_status = reg_status & 0b01111111;
                 }
                 break;
+                }
+            case 0xAA:
+                reg_x = reg_acc;
 
+                if(reg_x == 0) {
+                    reg_status = reg_status | 0b00000010;
+                } else {
+                    reg_status = reg_status & 0b11111101;
+                }
+
+                if((reg_x & 0b10000000) != 0) {
+                    reg_status = reg_status | 0b10000000;
+                } else {
+                    reg_status = reg_status & 0b01111111;
+                }
+                break;
         }
     }
 }

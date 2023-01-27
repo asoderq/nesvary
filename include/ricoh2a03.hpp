@@ -4,8 +4,7 @@
 #include <vector>
 
 class ricoh2a03 {
-
-    protected:
+    public:
         // register declaration
         std::uint16_t pc; // program counter
         std::uint8_t reg_acc; // accumulator
@@ -13,7 +12,7 @@ class ricoh2a03 {
         std::uint8_t reg_y; // index y
         std::uint8_t reg_status; // stack pointer
         std::uint8_t reg_p; // status
-    public:
+
         // construct cpu
         ricoh2a03();
         // interpret program

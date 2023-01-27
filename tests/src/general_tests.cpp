@@ -4,5 +4,5 @@
 TEST(nesvary, version_is_0_0_1)
 
 {
-    EXPECT_STREQ("0.0.1", nesvary_version());
+    ASSERT_STREQ("0.0.1", nesvary_version());
 }
