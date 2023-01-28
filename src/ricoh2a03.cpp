@@ -23,36 +23,36 @@ void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
                 {
                 std::uint8_t param = program[pc];
                 pc += 1;
-                reg_acc = param;
-
-                if(reg_acc == 0) {
-                    reg_status = reg_status | 0b00000010; 
-                } else {
-                    reg_status = reg_status | 0b11111101; 
-                }
-
-                if((reg_acc & 0b10000000) != 0) {
-                    reg_status = reg_status | 0b10000000;
-                } else {
-                    reg_status = reg_status & 0b01111111;
-                }
+                lda(param);
                 break;
                 }
             case 0xAA:
-                reg_x = reg_acc;
-
-                if(reg_x == 0) {
-                    reg_status = reg_status | 0b00000010;
-                } else {
-                    reg_status = reg_status & 0b11111101;
-                }
-
-                if((reg_x & 0b10000000) != 0) {
-                    reg_status = reg_status | 0b10000000;
-                } else {
-                    reg_status = reg_status & 0b01111111;
-                }
+                tax();
                 break;
         }
     }
+}
+
+void ricoh2a03::update_zero_and_negative_flags(std::uint8_t result) {
+    if(result == 0) {
+        reg_status = reg_status | 0b00000010;
+    } else {
+        reg_status = reg_status & 0b11111101;
+    }
+
+    if((result & 0b10000000) != 0) {
+        reg_status = reg_status | 0b10000000;
+    } else {
+        reg_status = reg_status & 0b01111111;
+    }
+}
+
+void ricoh2a03::lda(std::uint8_t value) {
+    reg_acc = value;
+    update_zero_and_negative_flags(reg_acc);
+}
+
+void ricoh2a03::tax() {
+    reg_x = reg_acc;
+    update_zero_and_negative_flags(reg_x);
 }

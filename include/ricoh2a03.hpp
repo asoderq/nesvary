@@ -17,4 +17,9 @@ class ricoh2a03 {
         ricoh2a03();
         // interpret program
         void interpret(std::vector<std::uint8_t> program);
+
+    private:
+        void update_zero_and_negative_flags(std::uint8_t result);
+        void lda(std::uint8_t value);
+        void tax();
 };
