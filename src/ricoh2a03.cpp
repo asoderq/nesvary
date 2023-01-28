@@ -75,12 +75,35 @@ void ricoh2a03::mem_write(std::uint16_t addr, std::uint8_t data) {
     memory[addr] = data;
 }
 
+
+std::uint16_t ricoh2a03::mem_read_u16(std::uint16_t pos) {
+    std::uint16_t lo = mem_read(pos);
+    std::uint16_t hi = mem_read(pos + 1);
+    return (hi << 8) | lo;
+}
+
+void ricoh2a03::mem_write_u16(std::uint16_t pos, std::uint16_t data) {
+    std::uint16_t hi = (data >> 8);
+    std::uint16_t lo = (data & 0xff);
+    mem_write(pos, lo);
+    mem_write(pos + 1, hi);
+}
+
+void ricoh2a03::reset() {
+    reg_acc = 0;
+    reg_x = 0;
+    reg_status = 0;
+
+    pc = mem_read_u16(0xFFFC);
+}
+
 void ricoh2a03::load_and_run(std::vector<std::uint8_t> program) {
     load(program);
+    reset();
     run();
 }
 
 void ricoh2a03::load(std::vector<std::uint8_t> program) {
     std::copy(program.begin(), program.end(), memory.begin());
-    pc = 0x8000;
+    mem_write_u16(0xFFFC, 0x8000);
 }

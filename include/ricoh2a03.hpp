@@ -21,6 +21,7 @@ class ricoh2a03 {
         ricoh2a03();
         // interpret program
         void run();
+        void reset();
         void load_and_run(std::vector<std::uint8_t> program);
         void load(std::vector<std::uint8_t> program);
 
@@ -36,4 +37,6 @@ class ricoh2a03 {
         // memory access
         std::uint8_t mem_read(std::uint16_t addr);
         void mem_write(std::uint16_t addr, std::uint8_t data);
+        std::uint16_t mem_read_u16(std::uint16_t pos);
+        void mem_write_u16(std::uint16_t pos, std::uint16_t data);
 };
