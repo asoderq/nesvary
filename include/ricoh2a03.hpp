@@ -22,4 +22,5 @@ class ricoh2a03 {
         void update_zero_and_negative_flags(std::uint8_t result);
         void lda(std::uint8_t value);
         void tax();
+        void inx();
 };

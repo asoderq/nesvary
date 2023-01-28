@@ -39,3 +39,18 @@ TEST(ricoh2a03, 0xaa_tax_move_a_to_x)
     cpu.interpret({0xaa, 0x00});
     ASSERT_EQ(cpu.reg_x, 10);
 }
+
+
+TEST(ricoh2a03, 0xe8_inx_overflow) {
+    ricoh2a03 cpu = ricoh2a03();
+    cpu.reg_x = 0xff;
+    cpu.interpret({0xe8, 0xe8, 0x00});
+    ASSERT_EQ(cpu.reg_x, 1);
+}
+
+
+TEST(ricoh2a03, 0xe8_5ops_together) {
+    ricoh2a03 cpu = ricoh2a03();
+    cpu.interpret({0xa9, 0xc0, 0xaa, 0xe8, 0x00});
+    ASSERT_EQ(cpu.reg_x, 0xc1);
+}

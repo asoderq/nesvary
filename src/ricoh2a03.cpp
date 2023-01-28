@@ -29,6 +29,9 @@ void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
             case 0xAA:
                 tax();
                 break;
+            case 0xE8:
+                inx();
+
         }
     }
 }
@@ -54,5 +57,10 @@ void ricoh2a03::lda(std::uint8_t value) {
 
 void ricoh2a03::tax() {
     reg_x = reg_acc;
+    update_zero_and_negative_flags(reg_x);
+}
+
+void ricoh2a03::inx() {
+    reg_x += 1;
     update_zero_and_negative_flags(reg_x);
 }
