@@ -9,11 +9,9 @@ ricoh2a03::ricoh2a03() {
     reg_p = 0;
 }
 
-void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
-    pc = 0;
-
+void ricoh2a03::run() {
     for(;;) {
-        std::uint8_t opcode = program[pc];
+        std::uint8_t opcode = mem_read(pc);
         pc += 1;
 
         switch(opcode) {
@@ -21,7 +19,7 @@ void ricoh2a03::interpret(std::vector<std::uint8_t> program) {
                 return;
             case 0xA9:
                 {
-                std::uint8_t param = program[pc];
+                std::uint8_t param = mem_read(pc);
                 pc += 1;
                 lda(param);
                 break;
@@ -50,6 +48,8 @@ void ricoh2a03::update_zero_and_negative_flags(std::uint8_t result) {
     }
 }
 
+// instruction
+
 void ricoh2a03::lda(std::uint8_t value) {
     reg_acc = value;
     update_zero_and_negative_flags(reg_acc);
@@ -63,4 +63,24 @@ void ricoh2a03::tax() {
 void ricoh2a03::inx() {
     reg_x += 1;
     update_zero_and_negative_flags(reg_x);
+}
+
+// memory access
+
+std::uint8_t ricoh2a03::mem_read(std::uint16_t addr) {
+    return memory[addr];
+}
+
+void ricoh2a03::mem_write(std::uint16_t addr, std::uint8_t data) {
+    memory[addr] = data;
+}
+
+void ricoh2a03::load_and_run(std::vector<std::uint8_t> program) {
+    load(program);
+    run();
+}
+
+void ricoh2a03::load(std::vector<std::uint8_t> program) {
+    std::copy(program.begin(), program.end(), memory.begin());
+    pc = 0x8000;
 }
