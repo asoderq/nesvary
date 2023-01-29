@@ -36,16 +36,20 @@ TEST(ricoh2a03, 0xa9_lda_zero_flag)
 TEST(ricoh2a03, 0xaa_tax_move_a_to_x)
 {
     ricoh2a03 cpu = ricoh2a03();
+    cpu.load({0xaa, 0x00});
+    cpu.reset();
     cpu.reg_acc = 10;
-    cpu.load_and_run({0xaa, 0x00});
+    cpu.run();
     ASSERT_EQ(cpu.reg_x, 10);
 }
 
 
 TEST(ricoh2a03, 0xe8_inx_overflow) {
     ricoh2a03 cpu = ricoh2a03();
+    cpu.load({0xe8, 0xe8, 0x00});
+    cpu.reset();
     cpu.reg_x = 0xff;
-    cpu.load_and_run({0xe8, 0xe8, 0x00});
+    cpu.run();
     ASSERT_EQ(cpu.reg_x, 1);
 }
 
@@ -60,6 +64,7 @@ TEST(ricoh2a03, load) {
     ricoh2a03 cpu = ricoh2a03();
     std::vector<std::uint8_t> program = {0xa9, 0x05, 0x00};
     cpu.load(program);
-    ASSERT_THAT(std::vector<uint8_t>({cpu.memory.begin(), cpu.memory.begin() + 3}),
+    ASSERT_THAT(std::vector<uint8_t>({cpu.memory.begin() +
+            0x8000, cpu.memory.begin() + 0x8003}),
             testing::ElementsAreArray(program));
 }

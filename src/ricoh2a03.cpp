@@ -104,6 +104,6 @@ void ricoh2a03::load_and_run(std::vector<std::uint8_t> program) {
 }
 
 void ricoh2a03::load(std::vector<std::uint8_t> program) {
-    std::copy(program.begin(), program.end(), memory.begin());
+    std::copy(program.begin(), program.end(), memory.begin() + 0x8000);
     mem_write_u16(0xFFFC, 0x8000);
 }
