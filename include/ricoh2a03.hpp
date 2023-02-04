@@ -212,7 +212,7 @@ const array<OpCode, 151> opcodes = {{
     {0x8a, "TXA", 1, 2, NoneAddressing},
     {0x9a, "TXS", 1, 2, NoneAddressing},
     {0x98, "TYA", 1, 2, NoneAddressing},
-    
+
     /* Stack */
     {0x48, "PHA", 1, 3, NoneAddressing},
     {0x68, "PLA", 1, 4, NoneAddressing},
@@ -223,26 +223,26 @@ const array<OpCode, 151> opcodes = {{
 class Ricoh2a03 {
     public:
         // register declaration
-        std::uint16_t pc; // program counter
-        std::uint8_t reg_acc; // accumulator
-        std::uint8_t reg_x; // index x
-        std::uint8_t reg_y; // index y
-        std::uint8_t reg_status; // stack pointer
-        std::uint8_t reg_p; // status
+        uint16_t pc; // program counter
+        uint8_t reg_acc; // accumulator
+        uint8_t reg_x; // index x
+        uint8_t reg_y; // index y
+        uint8_t reg_status; // stack pointer
+        uint8_t reg_p; // status
 
         // memory
-        std::array<std::uint8_t, 0xFFFF> memory;
+        array<std::uint8_t, 0xFFFF> memory;
 
         // construct cpu
         Ricoh2a03();
         // interpret program
         void run();
         void reset();
-        void load_and_run(std::vector<std::uint8_t> program);
-        void load(std::vector<std::uint8_t> program);
+        void load_and_run(vector<uint8_t> program);
+        void load(vector<uint8_t> program);
 
         // check and modify status, done at end of each instruction
-        void update_zero_and_negative_flags(std::uint8_t result);
+        void update_zero_and_negative_flags(uint8_t result);
 
         // instructions
         void lda(AddressingMode mode);
@@ -251,9 +251,9 @@ class Ricoh2a03 {
         void sta(AddressingMode mode);
 
         // memory access
-        std::uint16_t get_operand_address(AddressingMode mode);
-        std::uint8_t mem_read(std::uint16_t addr);
-        void mem_write(std::uint16_t addr, std::uint8_t data);
-        std::uint16_t mem_read_u16(std::uint16_t pos);
-        void mem_write_u16(std::uint16_t pos, std::uint16_t data);
+        uint16_t get_operand_address(AddressingMode mode);
+        uint8_t mem_read(uint16_t addr);
+        void mem_write(uint16_t addr, uint8_t data);
+        uint16_t mem_read_u16(uint16_t pos);
+        void mem_write_u16(uint16_t pos, uint16_t data);
 };

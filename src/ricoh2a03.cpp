@@ -1,6 +1,9 @@
 #include "ricoh2a03.hpp"
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
+
+using namespace std;
 
 Ricoh2a03::Ricoh2a03() {
     pc = 0;
@@ -14,31 +17,32 @@ Ricoh2a03::Ricoh2a03() {
 void Ricoh2a03::run() {
     using enum AddressingMode;
     for(;;) {
-        std::uint8_t opcode = mem_read(pc);
+        uint8_t instr = mem_read(pc);
         pc += 1;
+        uint16_t pc_state = pc;
+        const OpCode& opcode = *find_if(opcodes.begin(), opcodes.end(), [&instr] (const OpCode& oc) {return oc.code == instr;});
 
-        switch(opcode) {
+        switch(opcode.code) {
             case 0x00:
                 return;
             case 0x85:
-                sta(ZeroPage);
-                pc += 1;
-                return;
             case 0x95:
-                sta(ZeroPage_X);
-                pc += 1;
-                return;
+            case 0x8D:
+            case 0x9D:
+            case 0x99:
+            case 0x81:
+            case 0x91:
+                sta(opcode.addr_mode);
+                break;
             case 0xA9: // load accumulator
-                lda(Immediate);
-                pc += 1;
-                break;
             case 0xA5: // load accumulator
-                lda(ZeroPage);
-                pc += 1;
-                break;
+            case 0xB5: // load accumulator
             case 0xAD: // load accumulator
-                lda(Absolute);
-                pc += 2;
+            case 0xBD: // load accumulator
+            case 0xB9: // load accumulator
+            case 0xA1: // load accumulator
+            case 0xB1: // load accumulator
+                lda(opcode.addr_mode);
                 break;
             case 0xAA: // transfer a(cc) to x
                 tax();
@@ -47,15 +51,18 @@ void Ricoh2a03::run() {
                 inx();
                 break;
             default:
-                std::stringstream error;
-                error << "Opcode: " << std::hex << opcode << std::dec << "is unsupported." << std::endl;
-                throw std::runtime_error(error.str());
+                stringstream error;
+                error << "Opcode: " << hex << opcode.code << dec << "is unsupported." << endl;
+                throw runtime_error(error.str());
 
+        }
+        if(pc_state == pc) {
+            pc += opcode.bytes - 1;
         }
     }
 }
 
-void Ricoh2a03::update_zero_and_negative_flags(std::uint8_t result) {
+void Ricoh2a03::update_zero_and_negative_flags(uint8_t result) {
     if(result == 0) {
         reg_status = reg_status | 0b00000010;
     } else {
@@ -72,8 +79,8 @@ void Ricoh2a03::update_zero_and_negative_flags(std::uint8_t result) {
 // instruction
 
 void Ricoh2a03::lda(AddressingMode mode) {
-    std::uint16_t addr = get_operand_address(mode);
-    std::uint8_t value = mem_read(addr);
+    uint16_t addr = get_operand_address(mode);
+    uint8_t value = mem_read(addr);
     reg_acc = value;
     update_zero_and_negative_flags(reg_acc);
 }
@@ -89,13 +96,13 @@ void Ricoh2a03::inx() {
 }
 
 void Ricoh2a03::sta(AddressingMode mode) {
-    std::uint16_t addr = get_operand_address(mode);
+    uint16_t addr = get_operand_address(mode);
     mem_write(addr, reg_acc);
 }
 
 // memory access
 
-std::uint16_t Ricoh2a03::get_operand_address(AddressingMode mode) {
+uint16_t Ricoh2a03::get_operand_address(AddressingMode mode) {
     using enum AddressingMode;
     switch(mode) {
         case Immediate:
@@ -114,47 +121,47 @@ std::uint16_t Ricoh2a03::get_operand_address(AddressingMode mode) {
             return mem_read_u16(pc) + reg_y;
         case Indirect_X:
             {
-                std::uint8_t base = mem_read(pc);
-                std::uint8_t ptr = base + reg_x;
-                std::uint8_t lo = mem_read(ptr);
-                std::uint8_t hi = mem_read((std::uint16_t) ptr + 1);
-                return ((std::uint16_t) hi << 8) | lo;
+                uint8_t base = mem_read(pc);
+                uint8_t ptr = base + reg_x;
+                uint8_t lo = mem_read(ptr);
+                uint8_t hi = mem_read((uint16_t) ptr + 1);
+                return ((uint16_t) hi << 8) | lo;
             }
         case Indirect_Y:
             {
-                std::uint8_t base = mem_read(pc);
-                std::uint8_t lo = mem_read(base);
-                std::uint8_t hi = mem_read((std::uint16_t) base + 1);
-                std::uint16_t deref_base = ((std::uint16_t) hi << 8) | lo;
+                uint8_t base = mem_read(pc);
+                uint8_t lo = mem_read(base);
+                uint8_t hi = mem_read((uint16_t) base + 1);
+                uint16_t deref_base = ((uint16_t) hi << 8) | lo;
                 return deref_base + reg_y;
             }
         case NoneAddressing:
         default:
             //std::cerr << std::vformat("Addressing mode: {:d} is unsupported.", std::make_format_args(mode)) << std::endl;
-            std::stringstream error;
-            error << "Addressing mode: " << int(mode) << "is unsupported." << std::endl;
+            stringstream error;
+            error << "Addressing mode: " << int(mode) << "is unsupported." << endl;
             throw std::runtime_error(error.str());
     }
 }
 
-std::uint8_t Ricoh2a03::mem_read(std::uint16_t addr) {
+uint8_t Ricoh2a03::mem_read(uint16_t addr) {
     return memory[addr];
 }
 
-void Ricoh2a03::mem_write(std::uint16_t addr, std::uint8_t data) {
+void Ricoh2a03::mem_write(uint16_t addr, uint8_t data) {
     memory[addr] = data;
 }
 
 
-std::uint16_t Ricoh2a03::mem_read_u16(std::uint16_t pos) {
-    std::uint16_t lo = mem_read(pos);
-    std::uint16_t hi = mem_read(pos + 1);
-    return ((std::uint16_t) hi << 8) | lo;
+uint16_t Ricoh2a03::mem_read_u16(uint16_t pos) {
+    uint16_t lo = mem_read(pos);
+    uint16_t hi = mem_read(pos + 1);
+    return ((uint16_t) hi << 8) | lo;
 }
 
-void Ricoh2a03::mem_write_u16(std::uint16_t pos, std::uint16_t data) {
-    std::uint16_t hi = (data >> 8);
-    std::uint16_t lo = (data & 0xff);
+void Ricoh2a03::mem_write_u16(uint16_t pos, uint16_t data) {
+    uint16_t hi = (data >> 8);
+    uint16_t lo = (data & 0xff);
     mem_write(pos, lo);
     mem_write(pos + 1, hi);
 }
@@ -167,13 +174,13 @@ void Ricoh2a03::reset() {
     pc = mem_read_u16(0xFFFC);
 }
 
-void Ricoh2a03::load_and_run(std::vector<std::uint8_t> program) {
+void Ricoh2a03::load_and_run(vector<uint8_t> program) {
     load(program);
     reset();
     run();
 }
 
-void Ricoh2a03::load(std::vector<std::uint8_t> program) {
-    std::copy(program.begin(), program.end(), memory.begin() + 0x8000);
+void Ricoh2a03::load(vector<std::uint8_t> program) {
+    copy(program.begin(), program.end(), memory.begin() + 0x8000);
     mem_write_u16(0xFFFC, 0x8000);
 }
