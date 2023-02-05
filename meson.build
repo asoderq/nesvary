@@ -1,6 +1,6 @@
 project(
   'nesvary',
-  'cpp',
+  ['cpp', 'c'],
   version : '0.0.1',
   default_options : ['warning_level=3', 'cpp_std=c++20', 'build.cpp_std=c++20']
   )
@@ -21,11 +21,30 @@ project_test_files = [
   'tests/src/general_tests.cpp'
   ]
 
-project_dep = [
-  ]
+#====================================
+# SDL2 dependency
 
-test_dep = [
-  ]
+sdl2_lib = meson.get_compiler('c').find_library('SDL2')
+sdl2_dep = declare_dependency(dependencies: [ sdl2_lib])
+
+sdl2gfx_lib = meson.get_compiler('c').find_library('SDL2_gfx')
+sdl2gfx_dep = declare_dependency(dependencies: [ sdl2gfx_lib])
+
+sdl2ttf_lib = meson.get_compiler('c').find_library('SDL2_ttf')
+sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib])
+
+sdl2image_lib  = meson.get_compiler('c').find_library('SDL2_image')
+sdl2image_dep  = declare_dependency(dependencies: [sdl2image_lib])
+
+sdl2mixer_lib  = meson.get_compiler('c').find_library('SDL2_mixer')
+sdl2mixer_dep  = declare_dependency(dependencies: [sdl2mixer_lib])
+
+#=============
+# List all dependencies
+
+project_dep = [sdl2_dep, sdl2gfx_dep, sdl2ttf_dep, sdl2image_dep, sdl2mixer_dep]
+
+test_dep = []
 #=====================================
 # Targets
 

@@ -15,8 +15,13 @@ Ricoh2a03::Ricoh2a03() {
 }
 
 void Ricoh2a03::run() {
+    run_with_callback([](Ricoh2a03&){});
+}
+
+void Ricoh2a03::run_with_callback(function<void(Ricoh2a03&)> f) {
     using enum AddressingMode;
     for(;;) {
+        invoke(f, *this);
         uint8_t instr = mem_read(pc);
         pc += 1;
         uint16_t pc_state = pc;

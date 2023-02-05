@@ -1,5 +1,5 @@
 #pragma once
-
+#include <functional>
 #include <cinttypes>
 #include <vector>
 #include <array>
@@ -266,6 +266,7 @@ class Ricoh2a03 {
         Ricoh2a03();
         // interpret program
         void run();
+        void run_with_callback(function<void(Ricoh2a03&)> f);
         void reset();
         void load_and_run(vector<uint8_t> program);
         void load(vector<uint8_t> program);
