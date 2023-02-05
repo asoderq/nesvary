@@ -7,6 +7,35 @@
 
 using namespace std;
 
+/// # Status Register (P) http://wiki.nesdev.com/w/index.php/Status_flags
+///
+///  7 6 5 4 3 2 1 0
+///  N V _ B D I Z C
+///  | |   | | | | +--- Carry Flag
+///  | |   | | | +----- Zero Flag
+///  | |   | | +------- Interrupt Disable
+///  | |   | +--------- Decimal Mode (not used on NES)
+///  | |   +----------- Break Command
+///  | +--------------- Overflow Flag
+///  +----------------- Negative Flag
+///
+enum CpuStatus {
+    CARRY             = 0b00000001,
+    ZERO              = 0b00000010,
+    INTERRUPT_DISABLE = 0b00000100,
+    DECIMAL_MODE      = 0b00001000,
+    BREAK             = 0b00010000,
+    BREAK2            = 0b00100000,
+    OVERFLOW          = 0b01000000,
+    NEGATIVE          = 0b10000000
+};
+
+// Memory addresses
+const uint16_t STACK_ADDR = 0x0100;
+
+// Misc constants
+const uint8_t STACK_RESET = 0xFD;
+
 enum AddressingMode {
    Immediate,
    ZeroPage,
@@ -227,8 +256,8 @@ class Ricoh2a03 {
         uint8_t reg_acc; // accumulator
         uint8_t reg_x; // index x
         uint8_t reg_y; // index y
-        uint8_t reg_status; // stack pointer
-        uint8_t reg_p; // status
+        uint8_t reg_status; // status
+        uint8_t reg_sp; // stack pointer
 
         // memory
         array<std::uint8_t, 0xFFFF> memory;
@@ -241,14 +270,52 @@ class Ricoh2a03 {
         void load_and_run(vector<uint8_t> program);
         void load(vector<uint8_t> program);
 
+        // Utility methods
+        void set_status_flag(CpuStatus flag);
+        void clear_status_flag(CpuStatus flag);
+        void set_reg_acc(uint8_t value);
+        void add_to_reg_acc(uint8_t data);
+        void asl_accumulator();
+        void lsr_accumulator();
+        void rol_accumulator();
+        void ror_accumulator();
+
         // check and modify status, done at end of each instruction
         void update_zero_and_negative_flags(uint8_t result);
 
         // instructions
+        void ldy(AddressingMode mode);
+        void ldx(AddressingMode mode);
         void lda(AddressingMode mode);
+        void sta(AddressingMode mode);
+        void andop(AddressingMode mode);
+        void eor(AddressingMode mode);
+        void ora(AddressingMode mode);
         void tax();
         void inx();
-        void sta(AddressingMode mode);
+        void iny();
+        void dey();
+        void dex();
+        uint8_t decop(AddressingMode mode);
+        void pla();
+        void plp();
+        void php();
+        void bit(AddressingMode mode);
+        void compare(AddressingMode mode,  uint8_t compare_with);
+        void branch(bool condition);
+        void sbc(AddressingMode mode);
+        void adc(AddressingMode mode);
+        uint8_t asl(AddressingMode mode);
+        uint8_t lsr(AddressingMode mode);
+        uint8_t rol(AddressingMode mode);
+        uint8_t ror(AddressingMode mode);
+        uint8_t inc(AddressingMode mode);
+
+        // Stack methods
+        uint8_t stack_pop();
+        void stack_push(uint8_t data);
+        void stack_push_u16(uint16_t data);
+        uint16_t stack_pop_u16();
 
         // memory access
         uint16_t get_operand_address(AddressingMode mode);
