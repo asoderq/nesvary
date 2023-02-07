@@ -13,7 +13,8 @@
 
 using namespace std;
 
-array<uint8_t, 309> snake_code = {{
+//array<uint8_t, 309> snake_code = {{
+vector<uint8_t> snake_code = {{
     0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
     0x02, 0xa9, 0x04, 0x85, 0x03, 0xa9, 0x11, 0x85, 0x10, 0xa9, 0x10, 0x85, 0x12, 0xa9, 0x0f, 0x85,
     0x14, 0xa9, 0x04, 0x85, 0x11, 0x85, 0x13, 0x85, 0x15, 0x60, 0xa5, 0xfe, 0x85, 0x00, 0xa5, 0xfe,
@@ -41,27 +42,7 @@ const char* nesvary_version()
     return EXPAND_AND_QUOTE(PROJECT_VERSION);
 }
 
-bool read_screen_state(shared_ptr<Ricoh2a03> cpu, array<uint8_t, 3072>& frame) {
-    int frame_idx = 0;
-    bool update = false;
-
-    for(int i = 0x200; i < 0x600 + 1; ++i) {
-        uint8_t color_idx = cpu->mem_read((uint16_t)i);
-        SDL_Color color = color(color_idx);
-        if(frame[frame_idx] != color.r ||
-                frame[frame_idx + 1] != color.b ||
-                frame[frame_idx + 2] != color.g) {
-            frame[frame_idx] = color.r;
-            frame[frame_idx + 1] = color.b;
-            frame[frame_idx + 2] = color.g;
-            update = true;
-        }
-        frame_idx += 3;
-    }
-    return update;
-}
-
-SDL_Color color(uint8_t byte) {
+SDL_Color get_color(uint8_t byte) {
     SDL_Color color;
    
     switch(byte) {
@@ -102,17 +83,38 @@ SDL_Color color(uint8_t byte) {
     return color;
 }
 
+
+bool read_screen_state(shared_ptr<Ricoh2a03> cpu, vector<uint8_t>& frame) {
+    int frame_idx = 0;
+    bool update = false;
+
+    for(int i = 0x200; i < 0x600 + 1; ++i) {
+        uint8_t color_idx = cpu->mem_read((uint16_t)i);
+        SDL_Color color = get_color(color_idx);
+        if(frame[frame_idx] != color.r ||
+                frame[frame_idx + 1] != color.b ||
+                frame[frame_idx + 2] != color.g) {
+            frame[frame_idx] = color.r;
+            frame[frame_idx + 1] = color.b;
+            frame[frame_idx + 2] = color.g;
+            update = true;
+        }
+        frame_idx += 3;
+    }
+    return update;
+}
+
 void handle_user_input(shared_ptr<Ricoh2a03> cpu) {
     SDL_Event event;
     SDL_PumpEvents();
-    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KeyboardEvent, SDL_KeyboardEvent)) {
+    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_WINDOWEVENT, SDL_KEYDOWN)) {
 
         switch(event.type) {
             case SDL_QUIT:
-                exit();
+                exit(-1);
                 break;
             case SDL_KEYDOWN:
-                switch(event.key.keysym): {
+                switch(event.key.keysym.sym) {
                     case SDLK_w:
                         cpu->mem_write(0xFF, 0x77);
                         break;
@@ -134,7 +136,7 @@ void handle_user_input(shared_ptr<Ricoh2a03> cpu) {
                 break;
             default:
                 // unhandled
-                continue
+                continue;
 
         }
     }
@@ -159,7 +161,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if(!renderer) {
         cout << "Renderer could not be created!" << endl;
         cout << "SDL_Error: " << SDL_GetError() << endl;
@@ -183,11 +185,11 @@ int main(int argc, char *argv[]) {
 
 
     shared_ptr<Ricoh2a03> cpu = make_shared<Ricoh2a03>();
-    cpu->load(vector<uint8_t>(snake_code.begin(), snake_code.end()));
+    cpu->load(snake_code);
     cpu->reset();
 
-    array<uint8_t, 3072> frame = {};
-    cpu->run_with_callback([](Ricoh2a03&) {
+    vector<uint8_t> frame(3072);
+    cpu->run_with_callback([cpu, &frame, texture, renderer](Ricoh2a03&) {
         // TODO
         // read user input and write it to mem[0xFF]
         // update mem[0xFE] with new Random Number
@@ -197,10 +199,10 @@ int main(int argc, char *argv[]) {
         cpu->mem_write(0xFE, (uint8_t)rand()%RAND_MAX + 1);
 
         if(read_screen_state(cpu, frame)) {
-            SDL_UpdateTexture(texture, NULL, frame, 3 * 32);
+            SDL_UpdateTexture(texture, NULL, frame.data(), 3 * 32);
             SDL_RenderPresent(renderer);
-            this_thread::sleep_for(chrono::milliseconds(50));
         }
+        this_thread::sleep_for(chrono::milliseconds(50));
     });
 
     SDL_DestroyTexture(texture);

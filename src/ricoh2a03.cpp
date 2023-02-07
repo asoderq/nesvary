@@ -2,6 +2,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -26,7 +27,7 @@ void Ricoh2a03::run_with_callback(function<void(Ricoh2a03&)> f) {
         pc += 1;
         uint16_t pc_state = pc;
         const OpCode& opcode = *find_if(opcodes.begin(), opcodes.end(), [&instr] (const OpCode& oc) {return oc.code == instr;});
-
+	cout << "hej" << hex << unsigned(opcode.code) << dec << endl;
         switch(opcode.code) {
             case 0xA9: // load accumulator
             case 0xA5: // load accumulator
@@ -144,6 +145,7 @@ void Ricoh2a03::run_with_callback(function<void(Ricoh2a03&)> f) {
             case 0x16:
             case 0x0E:
             case 0x1E:
+		cout << "da" << endl;
                 asl(opcode.addr_mode);
                 break;
             case 0x2A:
@@ -227,9 +229,13 @@ void Ricoh2a03::run_with_callback(function<void(Ricoh2a03&)> f) {
                     break;
                 }
             case 0x20: // JSR
-                stack_push_u16(pc + 2 - 1);
-                pc = mem_read_u16(pc);
-                break;
+		{
+		    cout << "da" << endl;
+                    stack_push_u16(pc + 2 - 1);
+		    uint16_t addr = mem_read_u16(pc);
+                    pc = addr;
+                    break;
+		}
             case 0x60: // RTS
                 pc = stack_pop_u16() + 1;
                 break;
